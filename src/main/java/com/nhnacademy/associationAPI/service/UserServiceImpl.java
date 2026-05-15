@@ -39,11 +39,6 @@ public class UserServiceImpl implements UserService{
         User user = userRepository.findById(request.userId())
                 .orElseThrow(() -> new LoginFailedException("로그인 실패: 아이디 없음"));
 
-        //같은 패스워드여도 인코딩 할 때 마다 값이 달라짐
-//        String encodedPassword = passwordEncoder.encode(request.password());
-
-        //이 부분 수정
-        //password 확인 시 matches 메서드 사용
         if(!passwordEncoder.matches(request.password(), user.getPassword())){
             throw new LoginFailedException("로그인 실패: 패스워드 불일치");
         }
