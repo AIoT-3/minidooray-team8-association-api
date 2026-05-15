@@ -15,9 +15,9 @@ public class UserServiceImpl implements UserService{
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public UserServiceImpl(final UserRepository userRepository){
+    public UserServiceImpl(final UserRepository userRepository, PasswordEncoder passwordEncoder){
         this.userRepository = userRepository;
-        this.passwordEncoder = new BCryptPasswordEncoder();
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -37,7 +37,7 @@ public class UserServiceImpl implements UserService{
     @Override
     public LoginResponse login(LoginRequest request) {
         User user = userRepository.findById(request.userId())
-                .orElseThrow(() -> new LoginFailedException("로그인 실패: 아이디 없음"));
+                .orElseThrow(() -> new LoginFailedException("로그인 실패: 존재하지 않는 아이디"));
 
         if(!passwordEncoder.matches(request.password(), user.getPassword())){
             throw new LoginFailedException("로그인 실패: 패스워드 불일치");
@@ -47,9 +47,11 @@ public class UserServiceImpl implements UserService{
 
     @Override
     public void updateStatus(String userId, UserStatusUpdateRequest request) {
+        User.Status updateStatus = User.Status.fromString(request.status());
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
-        user.setStatus(User.Status.fromString(request.status()));
+        user.setStatus(updateStatus);
     }
 
     @Override

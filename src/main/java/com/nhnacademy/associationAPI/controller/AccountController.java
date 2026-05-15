@@ -2,6 +2,7 @@ package com.nhnacademy.associationAPI.controller;
 
 import com.nhnacademy.associationAPI.dto.*;
 import com.nhnacademy.associationAPI.service.UserService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RequestMapping("/accounts")
@@ -28,9 +29,10 @@ public class AccountController {
         return userService.getUser(userId);
     }
 
-    @PostMapping("/users/{userId}/status")
-    public void updateStatus(@RequestBody UserStatusUpdateRequest request,
-                             @PathVariable String userId){
+    @PutMapping("/users/{userId}/status")
+    public ResponseEntity<Void> updateStatus(@RequestBody UserStatusUpdateRequest request,
+                                       @PathVariable String userId){
         userService.updateStatus(userId, request);
+        return ResponseEntity.noContent().build();
     }
 }
