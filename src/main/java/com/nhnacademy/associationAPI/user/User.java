@@ -2,6 +2,8 @@ package com.nhnacademy.associationAPI.user;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.*;
@@ -41,5 +43,6 @@ public class User {
     private String password;
 
     @Setter
+    @Enumerated(value = EnumType.STRING)
     private Status status;
 }
