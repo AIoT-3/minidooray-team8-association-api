@@ -20,7 +20,7 @@ Content-Type: application/json
 
 
 ### getUser test
-POST http://localhost:8080/accounts/users/testId1234
+GET http://localhost:8080/accounts/users/testId1234
 
 
 ### updateStatus test
@@ -33,4 +33,4 @@ Content-Type: application/json
 
 
 ### getUser test
-POST http://localhost:8080/accounts/users/testId1234
+GET http://localhost:8080/accounts/users/testId1234

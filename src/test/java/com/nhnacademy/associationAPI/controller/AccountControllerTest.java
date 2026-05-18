@@ -21,8 +21,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -135,7 +134,7 @@ class AccountControllerTest {
         UserDto response = new UserDto("testId1234", "test@email.com", "JOIN");
         when(userService.getUser(anyString())).thenReturn(response);
 
-        mockMvc.perform(post("/accounts/users/testId1234"))
+        mockMvc.perform(get("/accounts/users/testId1234"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.userId").value("testId1234"))
                 .andExpect(jsonPath("$.email").value("test@email.com"))
@@ -147,7 +146,7 @@ class AccountControllerTest {
     void getUserFailed() throws Exception{
         when(userService.getUser(anyString())).thenThrow(new UserNotFoundException("testId1234"));
 
-        mockMvc.perform(post("/accounts/users/testId1234"))
+        mockMvc.perform(get("/accounts/users/testId1234"))
                 .andExpect(status().is(404))
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.message").value("존재하지 않는 유저: testId1234"))

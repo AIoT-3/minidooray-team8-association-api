@@ -25,7 +25,7 @@ public class AccountController {
         return userService.login(request);
     }
 
-    @PostMapping("/users/{userId}")
+    @GetMapping("/users/{userId}")
     public UserDto getUser(@PathVariable String userId){
         return userService.getUser(userId);
     }
