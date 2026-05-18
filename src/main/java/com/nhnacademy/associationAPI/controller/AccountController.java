@@ -2,6 +2,7 @@ package com.nhnacademy.associationAPI.controller;
 
 import com.nhnacademy.associationAPI.dto.*;
 import com.nhnacademy.associationAPI.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,12 +16,12 @@ public class AccountController {
     }
 
     @PostMapping("/signup")
-    public SignupResponse signup(@RequestBody SignupRequest request){
+    public SignupResponse signup(@Valid @RequestBody SignupRequest request){
         return userService.signup(request);
     }
 
     @PostMapping("/login")
-    public LoginResponse login(@RequestBody LoginRequest request){
+    public LoginResponse login(@Valid @RequestBody LoginRequest request){
         return userService.login(request);
     }
 

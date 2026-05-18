@@ -6,11 +6,12 @@ import com.nhnacademy.associationAPI.exception.UserAlreadyExistsException;
 import com.nhnacademy.associationAPI.exception.UserNotFoundException;
 import com.nhnacademy.associationAPI.repository.UserRepository;
 import com.nhnacademy.associationAPI.user.User;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional(readOnly = true)
 public class UserServiceImpl implements UserService{
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -21,6 +22,7 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
+    @Transactional
     public SignupResponse signup(SignupRequest request) {
         if(userRepository.existsById(request.id())){
             throw new UserAlreadyExistsException(request.id());
@@ -46,6 +48,7 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
+    @Transactional
     public void updateStatus(String userId, UserStatusUpdateRequest request) {
         User.Status updateStatus = User.Status.fromString(request.status());
 

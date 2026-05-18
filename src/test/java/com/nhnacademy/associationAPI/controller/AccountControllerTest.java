@@ -153,4 +153,46 @@ class AccountControllerTest {
                 .andExpect(jsonPath("$.message").value("존재하지 않는 유저: testId1234"))
                 .andExpect(jsonPath("$.path").value("/accounts/users/testId1234"));
     }
+
+    @Test
+    @DisplayName("회원가입 validation 테스트1")
+    void signupValidation1() throws Exception{
+        SignupRequest request = new SignupRequest("invalidId", "test@email.com", "testPw1234");
+
+        mockMvc.perform(post("/accounts/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().is(400))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("입력 형식 오류"))
+                .andExpect(jsonPath("$.path").value("/accounts/signup"));
+    }
+
+    @Test
+    @DisplayName("회원가입 validation 테스트2")
+    void signupValidation2() throws Exception{
+        SignupRequest request = new SignupRequest("testId1234", "invalidEmail", "testPw1234");
+
+        mockMvc.perform(post("/accounts/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().is(400))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("입력 형식 오류"))
+                .andExpect(jsonPath("$.path").value("/accounts/signup"));
+    }
+
+    @Test
+    @DisplayName("회원가입 validation 테스트3")
+    void signupValidation3() throws Exception{
+        SignupRequest request = new SignupRequest("testId1234", "test@email.com", "invalidPw");
+
+        mockMvc.perform(post("/accounts/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().is(400))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("입력 형식 오류"))
+                .andExpect(jsonPath("$.path").value("/accounts/signup"));
+    }
 }
