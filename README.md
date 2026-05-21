@@ -1,335 +1,102 @@
-# Minidooray Team 8 Gateway API Specification
+# Minidooray Team 8 Association API Specification
 
-이 문서는 Minidooray Gateway 서비스에서 처리하는 모든 API 엔드포인트와 해당 요청/응답 구조를 상세히 설명합니다.
+이 문서는 Minidooray Association 서비스에서 제공하는 계정 관리 관련 API 엔드포인트와 요청/응답 구조를 상세히 설명합니다. 
+이 API는 사용자 회원가입, 로그인, 정보 조회 및 상태 관리를 담당합니다.
 
 ---
 
-## 1. Account API (계정 관리)
+## 1. 개요
+- **Base URL**: `http://localhost:8080`
+- **Content-Type**: `application/json` (모든 요청 및 응답)
 
-### 1.1 회원가입
+---
+
+## 2. 공통 에러 응답 형식
+API 요청 처리 중 오류가 발생할 경우, 아래와 같은 공통된 JSON 형식을 반환합니다.
+
+```json
+{
+  "status": 400,
+  "message": "에러 메시지 내용",
+  "path": "/api/endpoint/path"
+}
+```
+
+- **400 Bad Request**: 입력 형식 오류 (Validation 실패 등)
+- **401 Unauthorized**: 로그인 실패 (아이디/비밀번호 불일치 등)
+- **404 Not Found**: 리소스를 찾을 수 없음 (사용자 미존재 등)
+- **409 Conflict**: 중복된 리소스 존재 (이미 가입된 아이디 등)
+
+---
+
+## 3. API 상세 명세
+
+### 3.1 회원가입 (Signup)
 - **Endpoint**: `POST /accounts/signup`
-- **Request (SignupRequest)**:
+- **설명**: 새로운 사용자 계정을 등록합니다.
+- **Request Headers**:
+  - `Content-Type: application/json`
+- **Request Body**:
+  | 필드명 | 타입 | 필수 여부 | 제약 사항 |
+  | :--- | :--- | :---: | :--- |
+  | `id` | String | O | 8~50자, 영문자 및 숫자 반드시 포함 |
+  | `email` | String | O | 최대 100자, 이메일 형식 준수 |
+  | `password` | String | O | 8~255자, 영문자 및 숫자 반드시 포함 |
+- **Response (200 OK)**:
   ```json
   {
-    "id": "user123",
-    "email": "user@example.com",
-    "password": "password123"
-  }
-  ```
-- **Response (SignupResponse)**:
-  ```json
-  {
-    "id": "user123",
+    "id": "testUser123",
     "status": "ACTIVE"
   }
   ```
 
-### 1.2 로그인
+### 3.2 로그인 (Login)
 - **Endpoint**: `POST /accounts/login`
-- **Request (LoginRequest)**:
+- **설명**: 사용자 인증을 수행하고 로그인 처리를 합니다.
+- **Request Headers**:
+  - `Content-Type: application/json`
+- **Request Body**:
+  | 필드명 | 타입 | 필수 여부 | 제약 사항 |
+  | :--- | :--- | :---: | :--- |
+  | `userId` | String | O | 가입된 사용자 아이디 |
+  | `password` | String | O | 가입된 사용자 비밀번호 |
+- **Response (200 OK)**:
   ```json
   {
-    "userId": "user123",
-    "password": "password123"
+    "userId": "testUser123"
   }
   ```
-- **Response (LoginResponse)**:
-  ```json
-  {
-    "userId": "user123"
-  }
-  ```
-  *(성공 시 Redis 세션에 `USER_ID`가 저장됩니다.)*
+- **에러 케이스**:
+  - `401 Unauthorized`: 아이디 또는 비밀번호가 일치하지 않거나, 탈퇴/휴면 상태인 경우
 
-### 1.3 로그아웃
-- **Endpoint**: `POST /accounts/logout`
-- **Description**: 현재 세션을 무효화(invalidate)합니다.
-
-### 1.4 사용자 상태 변경
-- **Endpoint**: `POST /accounts/users/{userId}/status`
-- **Request (UserStatusUpdateRequest)**:
-  ```json
-  {
-    "status": "DORMANT"
-  }
-  ```
-
-### 1.5 사용자 정보 조회
+### 3.3 사용자 정보 조회 (Get User)
 - **Endpoint**: `GET /accounts/users/{userId}`
-- **Response (UserDto)**:
+- **설명**: 특정 사용자의 상세 정보를 조회합니다.
+- **Path Variables**:
+  - `userId` (String): 조회를 원하는 사용자의 ID
+- **Response (200 OK)**:
   ```json
   {
-    "userId": "user123",
-    "email": "user@example.com",
+    "userId": "testUser123",
+    "email": "test@email.com",
     "status": "ACTIVE"
   }
   ```
+- **에러 케이스**:
+  - `404 Not Found`: 해당 ID를 가진 사용자가 존재하지 않는 경우
 
----
-
-## 2. Project API (프로젝트 관리)
-
-### 2.1 프로젝트 목록 조회
-- **Endpoint**: `GET /projects`
-- **Response**: `List<ProjectDto>`
-  ```json
-  [
-    {
-      "projectId": 1,
-      "name": "Project A",
-      "status": "ACTIVE"
-    }
-  ]
-  ```
-
-### 2.2 프로젝트 상세 조회
-- **Endpoint**: `GET /projects/{projectId}`
-- **Response (ProjectDetailDto)**:
-  ```json
-  {
-    "projectId": 1,
-    "name": "Project A",
-    "status": "ACTIVE",
-    "adminId": "admin123",
-    "members": [ { "userId": "user123" } ],
-    "tasks": [
-      {
-        "taskId": 1,
-        "milestoneId": 1,
-        "title": "Task 1",
-        "content": "Content...",
-        "writerId": "user123",
-        "createdAt": "2023-10-27T10:00:00"
-      }
-    ],
-    "milestones": [
-      {
-        "milestoneId": 1,
-        "name": "Sprint 1",
-        "startDate": "2023-10-01",
-        "endDate": "2023-10-15"
-      }
-    ]
-  }
-  ```
-
-### 2.3 프로젝트 생성
-- **Endpoint**: `POST /projects`
-- **Request (ProjectCreateRequest)**:
-  ```json
-  {
-    "name": "New Project"
-  }
-  ```
-- **Response (ProjectDto)**: 생성된 프로젝트 정보 반환
-
-### 2.4 프로젝트 수정
-- **Endpoint**: `POST /projects/{projectId}/edit`
-- **Request (ProjectUpdateRequest)**:
-  ```json
-  {
-    "name": "Updated Name",
-    "status": "DORMANT"
-  }
-  ```
-
-### 2.5 프로젝트 종료
-- **Endpoint**: `POST /projects/{projectId}/close`
-- **Description**: 프로젝트 상태를 `CLOSED`로 강제 업데이트합니다.
-
-### 2.6 프로젝트 멤버 추가
-- **Endpoint**: `POST /projects/{projectId}/members`
-- **Request (ProjectMemberRequest)**:
-  ```json
-  {
-    "userId": "newuser123"
-  }
-  ```
-
----
-
-## 3. Task API (업무 관리)
-
-### 3.1 업무 상세 조회
-- **Endpoint**: `GET /projects/{projectId}/tasks/{taskId}`
-- **Response (TaskDetailDto)**:
-  ```json
-  {
-    "taskId": 1,
-    "title": "Task 1",
-    "content": "Detailed Content",
-    "writerId": "user123",
-    "createdAt": "2023-10-27T10:00:00",
-    "comments": [
-      {
-        "commentId": 1,
-        "writerId": "user123",
-        "content": "First Comment",
-        "createdAt": "2023-10-27T11:00:00"
-      }
-    ]
-  }
-  ```
-
-### 3.2 업무 생성
-- **Endpoint**: `POST /projects/{projectId}/tasks`
-- **Request (TaskCreateRequest)**:
-  ```json
-  {
-    "projectId": 1,
-    "title": "New Task",
-    "content": "Task Content",
-    "writerId": "user123"
-  }
-  ```
-
-### 3.3 업무 수정
-- **Endpoint**: `POST /projects/{projectId}/tasks/{taskId}/edit`
-- **Request (TaskUpdateRequest)**:
-  ```json
-  {
-    "title": "Updated Title",
-    "content": "Updated Content"
-  }
-  ```
-
-### 3.4 업무 삭제
-- **Endpoint**: `POST /projects/{projectId}/tasks/{taskId}/delete`
-
-### 3.5 업무 마일스톤 설정
-- **Endpoint**: `POST /projects/{projectId}/tasks/{taskId}/milestones`
-- **Request (TaskMilestoneRequest)**:
-  ```json
-  {
-    "milestoneId": 2
-  }
-  ```
-
-### 3.6 업무 태그 설정
-- **Endpoint**: `POST /projects/{projectId}/tasks/{taskId}/tags`
-- **Request (TaskTagRequest)**:
-  ```json
-  {
-    "tagIds": [1, 2, 5]
-  }
-  ```
-
----
-
-## 4. Milestone API (마일스톤 관리)
-
-### 4.1 마일스톤 상세 조회
-- **Endpoint**: `GET /projects/{projectId}/milestones/{milestoneId}`
-- **Response (MilestoneDetailDto)**:
-  ```json
-  {
-    "milestoneId": 1,
-    "name": "Sprint 1",
-    "startDate": "2023-10-01",
-    "endDate": "2023-10-15",
-    "tasks": [
-      {
-        "taskId": 1,
-        "title": "Task Title",
-        "content": "Task Content",
-        "writerId": "user123",
-        "createdAt": "2023-10-27T10:00:00"
-      }
-    ]
-  }
-  ```
-
-### 4.2 마일스톤 생성
-- **Endpoint**: `POST /projects/{projectId}/milestones`
-- **Request (MilestoneCreateRequest)**:
-  ```json
-  {
-    "name": "Sprint 1",
-    "startDate": "2023-10-01",
-    "endDate": "2023-10-15"
-  }
-  ```
-- **Response (MilestoneDto)**: 생성된 마일스톤 정보 반환
-
-### 4.3 마일스톤 수정
-- **Endpoint**: `POST /projects/{projectId}/milestones/{milestoneId}/edit`
-- **Request (MilestoneCreateRequest)**:
-  ```json
-  {
-    "name": "Updated Sprint Name",
-    "startDate": "2023-10-02",
-    "endDate": "2023-10-16"
-  }
-  ```
-
-### 4.4 마일스톤 삭제
-- **Endpoint**: `POST /projects/{projectId}/milestones/{milestoneId}/delete`
-- **Description**: 해당 마일스톤을 삭제합니다.
-
----
-
-## 5. Tag API (태그 관리)
-
-### 5.1 태그 목록 조회
-- **Endpoint**: `GET /projects/{projectId}/tags`
-- **Response**: `List<TagDto>`
-  ```json
-  [
-    {
-      "tagId": 1,
-      "name": "Backend"
-    },
-    {
-      "tagId": 2,
-      "name": "UI/UX"
-    }
-  ]
-  ```
-
-### 5.2 태그 생성
-- **Endpoint**: `POST /projects/{projectId}/tags`
-- **Request (TagCreateRequest)**:
-  ```json
-  {
-    "name": "New Tag"
-  }
-  ```
-- **Response (TagDto)**: 생성된 태그 정보 반환
-
-### 5.3 태그 수정
-- **Endpoint**: `POST /projects/{projectId}/tags/{tagId}/edit`
-- **Request (TagCreateRequest)**:
-  ```json
-  {
-    "name": "Updated Tag Name"
-  }
-  ```
-
-### 5.4 태그 삭제
-- **Endpoint**: `POST /projects/{projectId}/tags/{tagId}/delete`
-- **Description**: 해당 태그를 삭제합니다.
-
----
-
-## 6. Comment API (댓글 관리)
-
-### 6.1 댓글 생성
-- **Endpoint**: `POST /projects/{projectId}/tasks/{taskId}/comments`
-- **Request (CommentCreateRequest)**:
-  ```json
-  {
-    "content": "Comment Content"
-  }
-  ```
-
-### 6.2 댓글 수정
-- **Endpoint**: `POST /projects/{projectId}/tasks/{taskId}/comments/{commentId}/edit`
-- **Request (CommentCreateRequest)**:
-  ```json
-  {
-    "content": "Updated Comment Content"
-  }
-  ```
-
-### 6.3 댓글 삭제
-- **Endpoint**: `POST /projects/{projectId}/tasks/{taskId}/comments/{commentId}/delete`
+### 3.4 사용자 상태 수정 (Update Status)
+- **Endpoint**: `PUT /accounts/users/{userId}/status`
+- **설명**: 사용자의 상태(활성, 휴면, 탈퇴 등)를 변경합니다.
+- **Path Variables**:
+  - `userId` (String): 상태를 변경할 사용자의 ID
+- **Request Headers**:
+  - `Content-Type: application/json`
+- **Request Body**:
+  | 필드명 | 타입 | 필수 여부 | 제약 사항 |
+  | :--- | :--- | :---: | :--- |
+  | `status` | String | O | 변경할 상태 값 (예: ACTIVE, DORMANT, WITHDRAWN) |
+- **Response (204 No Content)**: 응답 본문 없음
+- **에러 케이스**:
+  - `400 Bad Request`: 잘못된 상태 값이 입력된 경우
+  - `404 Not Found`: 해당 ID를 가진 사용자가 존재하지 않는 경우
