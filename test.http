@@ -1,0 +1,36 @@
+### signup test
+POST http://localhost:8080/accounts/signup
+Content-Type: application/json
+
+{
+  "id":"testId1234",
+  "email":"test@email.com",
+  "password":"testPw1234"
+}
+
+
+### login test
+POST http://localhost:8080/accounts/login
+Content-Type: application/json
+
+{
+  "userId": "testId1234",
+  "password": "testPw1234"
+}
+
+
+### getUser test
+GET http://localhost:8080/accounts/users/testId1234
+
+
+### updateStatus test
+PUT http://localhost:8080/accounts/users/testId1234/status
+Content-Type: application/json
+
+{
+  "status": "DORMANT"
+}
+
+
+### getUser test
+GET http://localhost:8080/accounts/users/testId1234

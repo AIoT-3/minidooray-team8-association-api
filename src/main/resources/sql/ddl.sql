@@ -79,7 +79,6 @@ CREATE TABLE task_tags (
                            CONSTRAINT fk_tt_task FOREIGN KEY (task_id) REFERENCES tasks (task_id) ON DELETE CASCADE,
                            CONSTRAINT fk_tt_tag  FOREIGN KEY (tag_id)  REFERENCES tags (tag_id)  ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
 -- Comment
 CREATE TABLE comments (
                           comment_id  BIGINT AUTO_INCREMENT,

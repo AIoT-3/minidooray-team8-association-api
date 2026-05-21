@@ -6,21 +6,23 @@ import com.nhnacademy.associationAPI.exception.UserAlreadyExistsException;
 import com.nhnacademy.associationAPI.exception.UserNotFoundException;
 import com.nhnacademy.associationAPI.repository.UserRepository;
 import com.nhnacademy.associationAPI.user.User;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional(readOnly = true)
 public class UserServiceImpl implements UserService{
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public UserServiceImpl(final UserRepository userRepository){
+    public UserServiceImpl(final UserRepository userRepository, PasswordEncoder passwordEncoder){
         this.userRepository = userRepository;
-        this.passwordEncoder = new BCryptPasswordEncoder();
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
+    @Transactional
     public SignupResponse signup(SignupRequest request) {
         if(userRepository.existsById(request.id())){
             throw new UserAlreadyExistsException(request.id());
@@ -37,13 +39,8 @@ public class UserServiceImpl implements UserService{
     @Override
     public LoginResponse login(LoginRequest request) {
         User user = userRepository.findById(request.userId())
-                .orElseThrow(() -> new LoginFailedException("로그인 실패: 아이디 없음"));
+                .orElseThrow(() -> new LoginFailedException("로그인 실패: 존재하지 않는 아이디"));
 
-        //같은 패스워드여도 인코딩 할 때 마다 값이 달라짐
-//        String encodedPassword = passwordEncoder.encode(request.password());
-
-        //이 부분 수정
-        //password 확인 시 matches 메서드 사용
         if(!passwordEncoder.matches(request.password(), user.getPassword())){
             throw new LoginFailedException("로그인 실패: 패스워드 불일치");
         }
@@ -51,10 +48,13 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
+    @Transactional
     public void updateStatus(String userId, UserStatusUpdateRequest request) {
+        User.Status updateStatus = User.Status.fromString(request.status());
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
-        user.setStatus(User.Status.fromString(request.status()));
+        user.setStatus(updateStatus);
     }
 
     @Override
